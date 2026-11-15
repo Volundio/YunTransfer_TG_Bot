@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YunTransfer 管理员控制台</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --border: #dfe4ef;
+      --text: #1b2437;
+      --muted: #606c84;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --warn-bg: #fffbeb;
+      --warn-border: #f59e0b;
+      --warn-text: #92400e;
+      --ok-bg: #ecfdf5;
+      --ok-text: #065f46;
+      --err-bg: #fef2f2;
+      --err-text: #991b1b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 48px; }
+    .topbar {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 16px;
+    }
+    .brand { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .tabs {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px;
+      border-bottom: 1px solid var(--border); padding-bottom: 10px;
+    }
+    .tab-btn {
+      border: 1px solid var(--border); background: var(--card); color: var(--text);
+      padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px;
+    }
+    .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+    .card h3 { margin: 0 0 12px; font-size: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .hint { font-size: 12px; color: var(--muted); }
+    input[type="text"], input[type="password"], input[type="number"], select, textarea {
+      width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: 7px;
+      font-size: 14px; background: #fff; color: var(--text);
+    }
+    textarea { min-height: 70px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 8px 14px; border-radius: 7px; border: 1px solid transparent;
+      font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none;
+      background: var(--primary); color: #fff;
+    }
+    .btn:hover { background: var(--primary-hover); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-ghost { background: #fff; color: var(--text); border-color: var(--border); }
+    .btn-ghost:hover { background: #f8fafc; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600;
+      background: #eef2ff; color: #3730a3;
+    }
+    .badge-ok { background: var(--ok-bg); color: var(--ok-text); }
+    .badge-err { background: var(--err-bg); color: var(--err-text); }
+    .badge-warn { background: var(--warn-bg); color: var(--warn-text); border: 1px solid #fcd34d; }
+    .badge-ro { background: #f1f5f9; color: #334155; border: 1px solid var(--border); font-family: monospace; }
+    .alert {
+      padding: 11px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px;
+      border: 1px solid var(--border); background: #fff;
+    }
+    .alert-warn { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text); }
+    .alert-err { background: var(--err-bg); border-color: #fca5a5; color: var(--err-text); }
+    .alert-ok { background: var(--ok-bg); border-color: #6ee7b7; color: var(--ok-text); }
+    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .check-row { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; }
+    .check-row input { margin-top: 3px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; background: #f8fafc; }
+    .table-wrap { overflow-x: auto; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; word-break: break-all; }
+    .login-box { max-width: 520px; margin: 72px auto; text-align: center; padding: 32px 24px; }
+    .hidden { display: none !important; }
+    .subbox { border: 1px dashed var(--border); border-radius: 9px; padding: 13px; margin-top: 12px; background: #fafbfe; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="toast" class="alert hidden"></div>
+
+    <div id="login-view" class="card login-box hidden">
+      <h2 style="margin-top:0">🔐 YunTransfer 管理后台</h2>
+      <p style="color:var(--muted);margin-bottom:18px">
+        请前往 Telegram 私聊机器人发送 <code class="badge-ro">/web</code> 获取一次性登录链接（5 分钟内单次有效）。
+      </p>
+      <div id="login-msg" class="alert alert-err hidden"></div>
+    </div>
+
+    <div id="app-view" class="hidden">
+      <div class="topbar">
+        <div class="brand">
+          <span>☁️ YunTransfer 管理后台</span>
+          <span id="admin-badge" class="badge badge-ro"></span>
+        </div>
+        <div class="row">
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-reload">刷新状态</button>
+          <button type="button" class="btn btn-danger btn-sm" id="btn-logout">退出登录</button>
+        </div>
+      </div>
+
+      <div class="tabs" id="tab-nav">
+        <button type="button" class="tab-btn active" data-tab="tab-sys">1. 系统与 OpenList 配置</button>
+        <button type="button" class="tab-btn" data-tab="tab-providers">2. 网盘配置与授权</button>
+        <button type="button" class="tab-btn" data-tab="tab-access">3. 黑白名单与群组权限</button>
+        <button type="button" class="tab-btn" data-tab="tab-tasks">4. 全局任务管理</button>
+      </div>
+
+      <section id="tab-sys" class="tab-pane"></section>
+      <section id="tab-providers" class="tab-pane hidden"></section>
+      <section id="tab-access" class="tab-pane hidden"></section>
+      <section id="tab-tasks" class="tab-pane hidden"></section>
+    </div>
+  </div>
+
+  <script>
+    "use strict";
+    const state = {
+      activeTab: "tab-sys",
+      boot: null,
+      access: null,
+      tasks: [],
+      tasksTotal: 0,
+      tasksLimit: 20,
+      tasksOffset: 0,
+      tasksStatus: "",
+      openlistTestResult: null,
+      authFlows: {},
+      pollTimers: {}
+    };
+
+    function esc(v) {
+      return String(v ?? "").replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    function fmtTime(ts) {
+      if (!ts) return "-";
+      try { return new Date(ts * 1000).toLocaleString("zh-CN", { hour12: false }); }
+      catch (_) { return String(ts); }
+    }
+
+    function showToast(msg, kind = "ok") {
+      const el = document.getElementById("toast");
+      el.className = "alert alert-" + kind;
+      el.textContent = msg;
+      el.classList.remove("hidden");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => el.classList.add("hidden"), 6000);
+    }
+
+    function clearAllPollTimers() {
+      Object.keys(state.pollTimers).forEach((pid) => {
+        clearTimeout(state.pollTimers[pid]);
+        delete state.pollTimers[pid];
+      });
+    }
+
+    async function api(path, method = "GET", body = undefined) {
+      const opts = { method, credentials: "same-origin", headers: {} };
+      if (method !== "GET" && method !== "HEAD") {
+        opts.headers["Content-Type"] = "application/json";
+        opts.body = JSON.stringify(body ?? {});
+      }
+      const res = await fetch(path, opts);
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
+      if (res.status === 401 && path !== "/api/auth/exchange") {
+        clearAllPollTimers();
+        showLoginScreen(data.message || "会话已失效，请重新发送 /web 获取一次性登录链接。");
+        throw new Error(data.message || "未登录");
+      }
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.message || ("请求失败 (" + res.status + ")"));
+      }
+      return data;
+    }
+
+    function showLoginScreen(errMsg) {
+      document.getElementById("app-view").classList.add("hidden");
+      document.getElementById("login-view").classList.remove("hidden");
+      const msgEl = document.getElementById("login-msg");
+      if (errMsg) {
+        msgEl.textContent = errMsg;
+        msgEl.classList.remove("hidden");
+      } else {
+        msgEl.classList.add("hidden");
+      }
+    }
+
+    async function loadBootstrap() {
+      state.boot = await api("/api/bootstrap", "GET");
+      document.getElementById("login-view").classList.add("hidden");
+      document.getElementById("app-view").classList.remove("hidden");
+      document.getElementById("admin-badge").textContent =
+        "Admin ID: " + state.boot.trust_roots.telegram_admin_id;
+      renderSysTab();
+      renderProvidersTab();
+      if (state.activeTab === "tab-access") await loadAccess();
+      if (state.activeTab === "tab-tasks") await loadTasks();
+    }
+
+    async function loadAccess() {
+      state.access = await api("/api/access", "GET");
+      renderAccessTab();
+    }
+
+    async function loadTasks() {
+      const q = new URLSearchParams({
+        limit: String(state.tasksLimit),
+        offset: String(state.tasksOffset)
+      });
+      if (state.tasksStatus) q.set("status", state.tasksStatus);
+      const data = await api("/api/tasks?" + q.toString(), "GET");
+      state.tasks = data.tasks || [];
+      state.tasksTotal = data.total || 0;
+      renderTasksTab();
+    }
+
+    function renderSysTab() {
+      const b = state.boot;
+      const tr = b.trust_roots;
+      const s = b.settings;
+      const c = b.constraints;
+      const ep = b.openlist_epochs;
+      const mountRows = (b.providers || []).map((p) => `
+        <div class="field">
+          <label>${esc(p.display_name)} OpenList 挂载路径 <span class="badge-ro">${esc(p.openlist_path_key)}</span></label>
+          <input type="text" data-ol-path-key="${esc(p.openlist_path_key)}" value="${esc(p.openlist_path)}" placeholder="${esc(p.default_openlist_path)}">
+          <span class="hint">修改后自动推进 ${esc(p.provider_id)} 挂载绑定代次（新任务生效）</span>
+        </div>
+      `).join("");
+
+      const epochBadges = Object.entries(ep.mount_epochs || {}).map(([k, v]) =>
+        `<span class="badge badge-ro">${esc(k)}: ${esc(v || "-")}</span>`
+      ).join(" ");
+
+      let olTestHtml = "";
+      if (state.openlistTestResult) {
+        const t = state.openlistTestResult;
+        olTestHtml = `
+          <div class="alert ${t.ok ? "alert-ok" : "alert-err"}" style="margin-top:12px">
+            <strong>${t.ok ? "✅ 连通正常" : "❌ 连通检测未通过"}</strong>：${esc(t.message || "")}<br>
+            账号: <span class="mono">${esc(t.username || "-")}</span> |
+            Role: <span class="mono">${esc(t.role)}</span> |
+            base_path: <span class="mono">${esc(t.base_path || "-")}</span> |
+            CanShare: <b>${t.can_share ? "是" : "否"}</b> |
+            CanWriteContent: <b>${t.can_write_content ? "是" : "否"}</b> |
+            /api/fs/link: <b>${t.can_fs_link ? "可用" : "不可用"}</b>
+          </div>`;
+      }
+
+      document.getElementById("tab-sys").innerHTML = `
+        <div class="card">
+          <h3>🛡️ 只读环境变量安全信任根 <span class="hint">（仅允许在容器环境变量中修改，Web 接口禁止写入）</span></h3>
+          <div class="grid">
+            <div class="field"><label>TELEGRAM_ADMIN_ID</label><div class="badge-ro" style="padding:7px 10px">${esc(tr.telegram_admin_id)}</div></div>
+            <div class="field"><label>WEB_BASE_URL</label><div class="badge-ro" style="padding:7px 10px">${esc(tr.web_base_url)}</div></div>
+            <div class="field"><label>WEB_TRUSTED_PROXIES</label><div class="badge-ro" style="padding:7px 10px">${esc((tr.web_trusted_proxies || []).join(", ") || "(未配置，仅信任直连对端 IP)")}</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>🔗 OpenList 对接与绑定代次</h3>
+          <div class="row" style="margin-bottom:12px">
+            <span class="hint">当前实例代次:</span>
+            <span class="badge badge-ro">${esc(ep.instance_epoch || "(未初始化)")}</span>
+            <span class="hint">挂载代次:</span>
+            ${epochBadges || '<span class="hint">-</span>'}
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label>OPENLIST_BASE_URL</label>
+              <input type="text" id="cfg-ol-base" value="${esc(s.openlist_base_url)}" placeholder="http://openlist:5244">
+              <span class="hint">内网/直连地址；留空禁用分享与直发</span>
+            </div>
+            <div class="field">
+              <label>OPENLIST_PUBLIC_URL</label>
+              <input type="text" id="cfg-ol-pub" value="${esc(s.openlist_public_url)}" placeholder="https://alist.example.com">
+              <span class="hint">公开分享域名（留空默认使用 OPENLIST_BASE_URL）</span>
+            </div>
+            <div class="field">
+              <label>OPENLIST_TOKEN <span class="badge ${s.has_openlist_token ? "badge-ok" : "badge-warn"}">${s.has_openlist_token ? "已配置" : "未配置"}</span></label>
+              <input type="password" id="cfg-ol-token" placeholder="留空保持已存令牌不变" autocomplete="new-password">
+              <label class="check-row"><input type="checkbox" id="cfg-clear-ol-token"> 清空已存 OPENLIST_TOKEN</label>
+            </div>
+            <div class="field">
+              <label>OPENLIST_USERNAME</label>
+              <input type="text" id="cfg-ol-user" value="${esc(s.openlist_username)}" placeholder="admin">
+            </div>
+            <div class="field">
+              <label>OPENLIST_PASSWORD <span class="badge ${s.has_openlist_password ? "badge-ok" : "badge-warn"}">${s.has_openlist_password ? "已配置" : "未配置"}</span></label>
+              <input type="password" id="cfg-ol-pass" placeholder="留空保持已存密码不变" autocomplete="new-password">
+              <label class="check-row"><input type="checkbox" id="cfg-clear-ol-pass"> 清空已存 OPENLIST_PASSWORD</label>
+            </div>
+            <div class="field">
+              <label>OPENLIST_SHARE_TTL_HOURS</label>
+              <input type="number" id="cfg-ol-ttl" min="${c.openlist_share_ttl_hours[0]}" max="${c.openlist_share_ttl_hours[1]}" value="${esc(s.openlist_share_ttl_hours)}">
+              <span class="hint">免密分享有效时长（${c.openlist_share_ttl_hours[0]}~${c.openlist_share_ttl_hours[1]} 小时，默认 24）</span>
+            </div>
+            ${mountRows}
+          </div>
+          <div class="row" style="margin-top:14px">
+            <button type="button" class="btn btn-ghost" id="btn-ol-test">测试 OpenList 连通性</button>
+            <button type="button" class="btn btn-ghost" id="btn-ol-rebind">刷新挂载绑定</button>
+          </div>
+          ${olTestHtml}
+        </div>
+
+        <div class="card">
+          <h3>⚙️ 运行资源配额与安全开关</h3>
+          <div class="alert alert-warn">
+            <label class="check-row">
+              <input type="checkbox" id="cfg-pikpak-excl" ${s.pikpak_direct_exclusive_dir ? "checked" : ""}>
+              <span>
+                <strong>PIKPAK_DIRECT_EXCLUSIVE_DIR（风险确认）</strong>：我确认 PikPak 保存目录由本机器人独占写入，无外部客户端并发写入文件（开启后才放行 <code>/pikpak -n</code> 快照差集直存，防止外部新建文件被误归属并在删任务时误删）。
+              </span>
+            </label>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label>MAX_DELIVERY_FILES</label>
+              <input type="number" id="cfg-max-files" min="${c.max_delivery_files[0]}" max="${c.max_delivery_files[1]}" value="${esc(s.max_delivery_files)}">
+              <span class="hint">单任务直发视频/图片上限（${c.max_delivery_files[0]}~${c.max_delivery_files[1]}）</span>
+            </div>
+            <div class="field">
+              <label>MAX_TEMP_DISK_MB</label>
+              <input type="number" id="cfg-max-disk" min="${c.max_temp_disk_mb[0]}" max="${c.max_temp_disk_mb[1]}" value="${esc(s.max_temp_disk_mb)}">
+              <span class="hint">临时中转目录配额 MiB（${c.max_temp_disk_mb[0]}~${c.max_temp_disk_mb[1]}）</span>
+            </div>
+            <div class="field">
+              <label>PENDING_INPUT_TTL_SECONDS</label>
+              <input type="number" id="cfg-pending-ttl" min="${c.pending_input_ttl_seconds[0]}" max="${c.pending_input_ttl_seconds[1]}" value="${esc(s.pending_input_ttl_seconds)}">
+              <span class="hint">待补全提取码有效秒数（${c.pending_input_ttl_seconds[0]}~${c.pending_input_ttl_seconds[1]}）</span>
+            </div>
+            <div class="field">
+              <label>MAX_RETAINED_TASKS</label>
+              <input type="number" id="cfg-max-tasks" min="${c.max_retained_tasks[0]}" max="${c.max_retained_tasks[1]}" value="${esc(s.max_retained_tasks)}">
+              <span class="hint">保留非在途历史任务上限（${c.max_retained_tasks[0]}~${c.max_retained_tasks[1]}）</span>
+            </div>
+            <div class="field">
+              <label>LOG_LEVEL</label>
+              <select id="cfg-log-level">
+                ${["DEBUG", "INFO", "WARNING", "ERROR"].map((lv) =>
+                  `<option value="${lv}" ${s.log_level === lv ? "selected" : ""}>${lv}</option>`
+                ).join("")}
+              </select>
+              <span class="hint">保存后立即调整根日志级别</span>
+            </div>
+          </div>
+          <div class="row" style="margin-top:16px">
+            <button type="button" class="btn" id="btn-save-sys">保存系统与 OpenList 配置</button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("btn-save-sys").addEventListener("click", saveSysSettings);
+      document.getElementById("btn-ol-test").addEventListener("click", runOpenListTest);
+      document.getElementById("btn-ol-rebind").addEventListener("click", runOpenListRebind);
+    }
+
+    async function saveSysSettings() {
+      try {
+        const body = {
+          OPENLIST_BASE_URL: document.getElementById("cfg-ol-base").value,
+          OPENLIST_PUBLIC_URL: document.getElementById("cfg-ol-pub").value,
+          OPENLIST_TOKEN: document.getElementById("cfg-ol-token").value,
+          CLEAR_OPENLIST_TOKEN: document.getElementById("cfg-clear-ol-token").checked,
+          OPENLIST_USERNAME: document.getElementById("cfg-ol-user").value,
+          OPENLIST_PASSWORD: document.getElementById("cfg-ol-pass").value,
+          CLEAR_OPENLIST_PASSWORD: document.getElementById("cfg-clear-ol-pass").checked,
+          OPENLIST_SHARE_TTL_HOURS: Number(document.getElementById("cfg-ol-ttl").value),
+          PIKPAK_DIRECT_EXCLUSIVE_DIR: document.getElementById("cfg-pikpak-excl").checked,
+          MAX_DELIVERY_FILES: Number(document.getElementById("cfg-max-files").value),
+          MAX_TEMP_DISK_MB: Number(document.getElementById("cfg-max-disk").value),
+          PENDING_INPUT_TTL_SECONDS: Number(document.getElementById("cfg-pending-ttl").value),
+          MAX_RETAINED_TASKS: Number(document.getElementById("cfg-max-tasks").value),
+          LOG_LEVEL: document.getElementById("cfg-log-level").value
+        };
+        document.querySelectorAll("[data-ol-path-key]").forEach((inp) => {
+          body[inp.getAttribute("data-ol-path-key")] = inp.value;
+        });
+        await api("/api/settings", "POST", body);
+        showToast("系统与 OpenList 配置已保存");
+        await loadBootstrap();
+      } catch (e) { showToast(e.message, "err"); }
+    }
+
+    async function runOpenListTest() {
+      try {
+        state.openlistTestResult = await api("/api/openlist/test", "POST", {});
+        renderSysTab();
+        showToast(state.openlistTestResult.ok ? "OpenList 连通性校验通过" : "OpenList 校验未通过", state.openlistTestResult.ok ? "ok" : "err");
+      } catch (e) { showToast(e.message, "err"); }
+    }
+
+    async function runOpenListRebind() {
+      if (!confirm("确认刷新全部 OpenList 挂载绑定代次？旧任务后续将受绑定核验保护。")) return;
+      try {
+        await api("/api/openlist/rebind", "POST", {});
+        showToast("OpenList 挂载绑定代次已刷新");
+        await loadBootstrap();
+      } catch (e) { showToast(e.message, "err"); }
+    }
+
+    function renderProvidersTab() {
+      const providers = (state.boot && state.boot.providers) || [];
+      const html = providers.map((p) => {
+        const pid = p.provider_id;
+        const acc = p.account || {};
+        const modes = [p.auth_mode, ...(p.extra_auth_modes || [])];
+        const exclNote = p.requires_exclusive_dir_for_direct
+          ? `<span class="badge ${p.direct_exclusive_dir_confirmed ? "badge-ok" : "badge-warn"}">-n 直存独占确认: ${p.direct_exclusive_dir_confirmed ? "已开启" : "未开启(默认拦截)"}</span>`
+          : "";
+
+        let modeSections = "";
+        if (modes.includes("oauth_code")) {
+          const cfgInputs = (p.oauth_config_fields || []).map((f) => `
+            <div class="field">
+              <label>${esc(f.label)} <span class="badge-ro">${esc(f.key)}</span>
+                ${f.secret ? `<span class="badge ${f.configured ? "badge-ok" : "badge-warn"}">${f.configured ? "已配置" : "未配置"}</span>` : ""}
+              </label>
+              <input type="${f.secret ? "password" : "text"}" data-oauth-cfg="${esc(pid)}" data-key="${esc(f.key)}"
+                value="${f.secret ? "" : esc(f.current_value || "")}" placeholder="${esc(f.placeholder || "")}" autocomplete="off">
+            </div>
+          `).join("");
+          modeSections += `
+            <div class="subbox">
+              <strong>🔑 OAuth 授权码绑定</strong>
+              ${cfgInputs ? `<div class="grid" style="margin-top:8px">${cfgInputs}</div>` : ""}
+              <div class="row" style="margin-top:10px">
+                ${cfgInputs ? `<button type="button" class="btn btn-ghost btn-sm" data-act="save-oauth-cfg" data-pid="${esc(pid)}">保存应用参数并刷新授权链接</button>` : ""}
+                ${p.oauth_authorize_url ? `<a class="btn btn-ghost btn-sm" href="${esc(p.oauth_authorize_url)}" target="_blank" rel="noopener noreferrer">打开官方授权页获取授权码 ↗</a>` : `<span class="hint">先保存 Client ID 后生成授权页链接</span>`}
+              </div>
+              <div class="row" style="margin-top:10px">
+                <input type="text" id="oauth-code-${esc(pid)}" placeholder="粘贴官方回调返回的授权码 code" style="max-width:380px">
+                <button type="button" class="btn btn-sm" data-act="submit-oauth-code" data-pid="${esc(pid)}">提交授权码换取 Token</button>
+              </div>
+            </div>`;
+        }
+
+        if (modes.includes("interactive_flow")) {
+          const flow = state.authFlows[pid];
+          modeSections += `
+            <div class="subbox">
+              <strong>📱 设备码交互授权 (Device Flow)</strong>
+              <div class="row" style="margin-top:8px">
+                <button type="button" class="btn btn-sm" data-act="start-flow" data-pid="${esc(pid)}">发起设备码授权</button>
+                ${flow ? `
+                  <button type="button" class="btn btn-ghost btn-sm" data-act="poll-flow" data-pid="${esc(pid)}">立即检查授权结果</button>
+                  <button type="button" class="btn btn-danger btn-sm" data-act="cancel-flow" data-pid="${esc(pid)}">取消授权</button>
+                ` : ""}
+              </div>
+              ${flow ? `
+                <div class="alert alert-warn" style="margin-top:10px;margin-bottom:0">
+                  请打开验证链接：<a href="${esc(flow.verification_uri)}" target="_blank" rel="noopener noreferrer"><b>${esc(flow.verification_uri)}</b></a><br>
+                  输入设备验证码：<code class="badge-ro" style="font-size:15px;font-weight:700">${esc(flow.user_code)}</code>
+                  <span class="hint">（状态：${esc(flow.statusText || "等待扫码确认中...")}）</span>
+                </div>` : ""}
+            </div>`;
+        }
+
+        if (modes.includes("secret_fields")) {
+          const sFields = (p.secret_fields || []).map((f) => `
+            <div class="field">
+              <label>${esc(f.label)} <span class="badge-ro">${esc(f.key)}</span></label>
+              ${f.key.toUpperCase().includes("COOKIE")
+                ? `<textarea data-sec-pid="${esc(pid)}" data-key="${esc(f.key)}" placeholder="${esc(f.placeholder || "输入新凭证覆盖保存")}"></textarea>`
+                : `<input type="${f.secret ? "password" : "text"}" data-sec-pid="${esc(pid)}" data-key="${esc(f.key)}" placeholder="${esc(f.placeholder || "输入新凭证覆盖保存")}" autocomplete="new-password">`
+              }
+              ${f.help_text ? `<span class="hint">${esc(f.help_text)}</span>` : ""}
+            </div>
+          `).join("");
+          modeSections += `
+            <div class="subbox">
+              <strong>🔐 凭证直填绑定</strong>
+              <div class="grid" style="margin-top:8px">${sFields}</div>
+              <div class="row" style="margin-top:10px">
+                <button type="button" class="btn btn-sm" data-act="save-secret" data-pid="${esc(pid)}">保存凭证并核验账号绑定</button>
+              </div>
+            </div>`;
+        }
+
+        return `
+          <div class="card">
+            <h3>
+              <span>${esc(p.display_name)}</span>
+              <span class="badge-ro">${esc(String(p.command || "").startsWith("/") ? p.command : "/" + p.command)}</span>
+              <span class="badge ${acc.authorized ? "badge-ok" : "badge-err"}">${acc.authorized ? "已授权" : "未授权"}</span>
+              ${acc.account_binding_id ? `<span class="badge badge-ro">绑定: ${esc(acc.account_binding_id)}</span>` : ""}
+              ${acc.account_label ? `<span class="badge">${esc(acc.account_label)}</span>` : ""}
+              ${exclNote}
+            </h3>
+            ${acc.message ? `<div class="hint" style="margin-bottom:10px">状态说明：${esc(acc.message)}（更新时间：${fmtTime(acc.updated_at)}）</div>` : ""}
+            <div class="grid">
+              <div class="field">
+                <label>网盘保存基准路径 <span class="badge-ro">${esc(p.save_path_key)}</span></label>
+                <input type="text" id="save-path-${esc(pid)}" value="${esc(p.save_path)}" placeholder="${esc(p.default_save_path)}">
+              </div>
+              <div class="field">
+                <label>对应 OpenList 路径 <span class="badge-ro">${esc(p.openlist_path_key)}</span></label>
+                <input type="text" id="ol-path-${esc(pid)}" value="${esc(p.openlist_path)}" placeholder="${esc(p.default_openlist_path)}">
+              </div>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <button type="button" class="btn btn-ghost btn-sm" data-act="save-paths" data-pid="${esc(pid)}"
+                data-save-key="${esc(p.save_path_key)}" data-ol-key="${esc(p.openlist_path_key)}">保存路径配置</button>
+            </div>
+            ${modeSections}
+          </div>`;
+      }).join("");
+
+      const box = document.getElementById("tab-providers");
+      box.innerHTML = html || '<div class="card">未注册任何网盘适配器</div>';
+    }
+
+    async function schedulePollFlow(pid, delaySec) {
+      clearTimeout(state.pollTimers[pid]);
+      state.pollTimers[pid] = setTimeout(() => pollInteractiveFlow(pid, true), Math.max(2, delaySec) * 1000);
+    }
+
+    async function pollInteractiveFlow(pid, auto = false) {
+      try {
+        const res = await api(`/api/providers/${encodeURIComponent(pid)}/auth/poll`, "POST", {});
+        const flow = state.authFlows[pid];
+        if (res.status === "success") {
+          clearTimeout(state.pollTimers[pid]);
+          delete state.pollTimers[pid];
+          delete state.authFlows[pid];
+          showToast("设备码授权成功，账号绑定已更新");
+          await loadBootstrap();
+        } else if (res.status === "pending") {
+          if (flow) {
+            flow.statusText = res.message || "等待用户在浏览器完成确认...";
+            renderProvidersTab();
+            schedulePollFlow(pid, flow.interval || 5);
+          }
+        } else {
+          clearTimeout(state.pollTimers[pid]);
+          delete state.pollTimers[pid];
+          delete state.authFlows[pid];
+          renderProvidersTab();
+          showToast(res.message || ("设备码授权结束: " + res.status), "err");
+        }
+      } catch (e) {
+        if (!auto) showToast(e.message, "err");
+      }
+    }
+
+    function renderAccessTab() {
+      const a = state.access;
+      if (!a) return;
+      const renderUserRows = (items) => items.length ? items.map((u) => `
+        <tr>
+          <td class="mono">${esc(u.user_id)}</td>
+          <td>${fmtTime(u.created_at)}</td>
+          <td><button type="button" class="btn btn-ghost btn-sm" data-acc-act="rm-user" data-uid="${esc(u.user_id)}">移除</button></td>
+        </tr>`).join("") : '<tr><td colspan="3" class="hint">暂无记录</td></tr>';
+
+      const grpRows = (a.group_whitelist || []).length ? a.group_whitelist.map((g) => `
+        <tr>
+          <td class="mono">${esc(g.chat_id)}</td>
+          <td>${fmtTime(g.created_at)}</td>
+          <td><button type="button" class="btn btn-ghost btn-sm" data-acc-act="rm-group" data-cid="${esc(g.chat_id)}">移除</button></td>
+        </tr>`).join("") : '<tr><td colspan="3" class="hint">暂无群组白名单</td></tr>';
+
+      document.getElementById("tab-access").innerHTML = `
+        <div class="card">
+          <h3>🚦 访问控制总开关 <span class="hint">（判定优先级：管理员 &gt; 黑名单一票否决 &gt; 白名单模式）</span></h3>
+          <div class="row">
+            <label class="check-row">
+              <input type="checkbox" id="acc-wl-enabled" ${a.whitelist_enabled ? "checked" : ""}>
+              <span>启用白名单模式（<code>WHITELIST_ENABLED</code>；关闭后除黑名单外允许访问）</span>
+            </label>
+            <button type="button" class="btn btn-sm" id="btn-save-wl-toggle">保存模式</button>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <h3>✅ 用户白名单 (${(a.whitelist || []).length})</h3>
+            <div class="row" style="margin-bottom:10px">
+              <input type="number" id="inp-wl-uid" placeholder="正整数 Telegram User ID" style="max-width:210px">
+              <button type="button" class="btn btn-sm" data-acc-act="add-wl">加入白名单</button>
+            </div>
+            <div class="table-wrap"><table><thead><tr><th>User ID</th><th>添加时间</th><th>操作</th></tr></thead><tbody>${renderUserRows(a.whitelist || [])}</tbody></table></div>
+          </div>
+
+          <div class="card">
+            <h3>⛔ 用户黑名单 (${(a.blacklist || []).length})</h3>
+            <div class="row" style="margin-bottom:10px">
+              <input type="number" id="inp-bl-uid" placeholder="正整数 Telegram User ID" style="max-width:210px">
+              <button type="button" class="btn btn-danger btn-sm" data-acc-act="add-bl">加入黑名单</button>
+            </div>
+            <div class="table-wrap"><table><thead><tr><th>User ID</th><th>添加时间</th><th>操作</th></tr></thead><tbody>${renderUserRows(a.blacklist || [])}</tbody></table></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>👥 群组白名单 (${(a.group_whitelist || []).length} / ${esc(a.max_group_whitelist_count)})</h3>
+          <div class="row" style="margin-bottom:10px">
+            <input type="number" id="inp-grp-cid" placeholder="负数群组 ID，如 -1001234567890" style="max-width:260px">
+            <button type="button" class="btn btn-sm" data-acc-act="add-grp">添加白名单群组</button>
+          </div>
+          <div class="table-wrap"><table><thead><tr><th>Group Chat ID</th><th>添加时间</th><th>操作</th></tr></thead><tbody>${grpRows}</tbody></table></div>
+        </div>
+
+        <div class="card">
+          <h3>⚠️ 重置名单</h3>
+          <p class="hint" style="margin-top:0">清空当前数据库中的用户黑白名单与群组白名单，并重新导入启动环境变量 <code>INITIAL_*_IDS</code>。</p>
+          <button type="button" class="btn btn-danger btn-sm" id="btn-reset-access">重置为初始环境变量名单</button>
+        </div>
+      `;
+
+      document.getElementById("btn-save-wl-toggle").addEventListener("click", async () => {
+        try {
+          const enabled = document.getElementById("acc-wl-enabled").checked;
+          await api("/api/settings", "POST", { WHITELIST_ENABLED: enabled });
+          showToast("白名单开关已更新");
+          await loadBootstrap();
+          await loadAccess();
+        } catch (e) { showToast(e.message, "err"); }
+      });
+
+      document.getElementById("btn-reset-access").addEventListener("click", async () => {
+        if (!confirm("二次确认：确定清空当前所有自定义名单并重置为初始环境变量名单吗？")) return;
+        try {
+          state.access = await api("/api/access/reset", "POST", { confirm: true });
+          renderAccessTab();
+          showToast("已重置为初始环境变量名单");
+        } catch (e) { showToast(e.message, "err"); }
+      });
+    }
+
+    function renderTasksTab() {
+      const statuses = ["", "queued", "transferring", "ready", "partial", "delivering", "deleting", "delete_failed", "failed"];
+      const rows = state.tasks.length ? state.tasks.map((t) => {
+        const modeBadge = t.no_subdir
+          ? '<span class="badge badge-warn">-n 直存</span>'
+          : '<span class="badge">独立子目录</span>';
+        const stKind = (t.status === "ready") ? "badge-ok"
+          : (t.status === "failed" || t.status === "delete_failed") ? "badge-err" : "badge-warn";
+        const uncertainBadge = t.transfer_uncertain
+          ? ' <span class="badge badge-warn" title="存在落库前中断或超时不确定批次">⚠️ 待核查残留</span>' : "";
+        const accBadge = `<span class="badge ${t.account_binding_matched ? "badge-ok" : "badge-err"}">账号:${t.account_binding_matched ? "匹配" : "已变更"}</span>`;
+        const olBadge = `<span class="badge ${t.openlist_binding_matched ? "badge-ok" : "badge-warn"}">挂载:${t.openlist_binding_matched ? "匹配" : "不匹配"}</span>`;
+
+        let actions = "";
+        if (t.deletable) {
+          if (t.account_binding_matched) {
+            actions += `<button type="button" class="btn btn-danger btn-sm" data-task-del="${esc(t.task_id)}" data-detach="0">${t.status === "delete_failed" ? "重试连带删除" : "连带删除云端文件"}</button> `;
+          }
+          if (!t.account_binding_matched || !t.openlist_binding_matched) {
+            actions += `<button type="button" class="btn btn-ghost btn-sm" data-task-del="${esc(t.task_id)}" data-detach="1">仅清除脱离绑定的本地记录</button>`;
+          }
+        } else {
+          actions = '<span class="hint">在途执行中</span>';
+        }
+
+        return `
+          <tr>
+            <td class="mono"><b>${esc(t.task_id)}</b><br><span class="hint">UID: ${esc(t.user_id)}</span></td>
+            <td>${esc(t.provider_display_name)}<br><span class="mono hint">${esc(t.account_binding_id)}</span></td>
+            <td><b>${esc(t.share_title || "-")}</b><br><span class="mono hint">${esc(t.task_dir_path || t.base_save_path)}</span>
+              ${t.error_message ? `<div class="hint" style="color:var(--danger)">${esc(t.error_message)}</div>` : ""}
+            </td>
+            <td>${modeBadge}<br><span class="hint">条目: ${esc(t.item_count)}</span></td>
+            <td><span class="badge ${stKind}">${esc(t.status)}</span>${uncertainBadge}</td>
+            <td>${accBadge}<br>${olBadge}</td>
+            <td>${fmtTime(t.created_at)}</td>
+            <td><div class="row">${actions}</div></td>
+          </tr>`;
+      }).join("") : '<tr><td colspan="8" class="hint">暂无符合条件的任务记录</td></tr>';
+
+      const curPage = Math.floor(state.tasksOffset / state.tasksLimit) + 1;
+      const totalPages = Math.max(1, Math.ceil(state.tasksTotal / state.tasksLimit));
+
+      document.getElementById("tab-tasks").innerHTML = `
+        <div class="card">
+          <div class="topbar" style="margin-bottom:12px">
+            <h3 style="margin:0">📋 全局转存任务 (${state.tasksTotal})</h3>
+            <div class="row">
+              <select id="sel-task-status" style="width:auto">
+                ${statuses.map((st) => `<option value="${st}" ${state.tasksStatus === st ? "selected" : ""}>${st || "全部状态"}</option>`).join("")}
+              </select>
+              <button type="button" class="btn btn-ghost btn-sm" id="btn-refresh-tasks">刷新列表</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>任务 / 用户</th><th>网盘 / 绑定</th><th>分享标题 / 路径</th><th>模式</th><th>状态</th><th>绑定核验</th><th>创建时间</th><th>操作</th></tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+          <div class="row" style="justify-content:space-between;margin-top:14px">
+            <span class="hint">第 ${curPage} / ${totalPages} 页（共 ${state.tasksTotal} 条）</span>
+            <div class="row">
+              <button type="button" class="btn btn-ghost btn-sm" id="btn-prev-page" ${state.tasksOffset <= 0 ? "disabled" : ""}>上一页</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="btn-next-page" ${state.tasksOffset + state.tasksLimit >= state.tasksTotal ? "disabled" : ""}>下一页</button>
+            </div>
+          </div>
+        </div>`;
+
+      document.getElementById("sel-task-status").addEventListener("change", (ev) => {
+        state.tasksStatus = ev.target.value;
+        state.tasksOffset = 0;
+        loadTasks().catch((e) => showToast(e.message, "err"));
+      });
+      document.getElementById("btn-refresh-tasks").addEventListener("click", () => {
+        loadTasks().catch((e) => showToast(e.message, "err"));
+      });
+      document.getElementById("btn-prev-page").addEventListener("click", () => {
+        state.tasksOffset = Math.max(0, state.tasksOffset - state.tasksLimit);
+        loadTasks().catch((e) => showToast(e.message, "err"));
+      });
+      document.getElementById("btn-next-page").addEventListener("click", () => {
+        state.tasksOffset += state.tasksLimit;
+        loadTasks().catch((e) => showToast(e.message, "err"));
+      });
+    }
+
+    document.getElementById("tab-nav").addEventListener("click", async (ev) => {
+      const btn = ev.target.closest("[data-tab]");
+      if (!btn) return;
+      const target = btn.getAttribute("data-tab");
+      state.activeTab = target;
+      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b === btn));
+      document.querySelectorAll(".tab-pane").forEach((p) => p.classList.toggle("hidden", p.id !== target));
+      try {
+        if (target === "tab-access") await loadAccess();
+        if (target === "tab-tasks") await loadTasks();
+      } catch (e) { showToast(e.message, "err"); }
+    });
+
+    document.getElementById("tab-providers").addEventListener("click", async (ev) => {
+      const btn = ev.target.closest("[data-act]");
+      if (!btn) return;
+      const act = btn.getAttribute("data-act");
+      const pid = btn.getAttribute("data-pid");
+      try {
+        if (act === "save-paths") {
+          const saveKey = btn.getAttribute("data-save-key");
+          const olKey = btn.getAttribute("data-ol-key");
+          await api("/api/settings", "POST", {
+            [saveKey]: document.getElementById("save-path-" + pid).value,
+            [olKey]: document.getElementById("ol-path-" + pid).value
+          });
+          showToast("保存路径已更新");
+          await loadBootstrap();
+        } else if (act === "save-oauth-cfg") {
+          const body = {};
+          document.querySelectorAll(`[data-oauth-cfg="${CSS.escape(pid)}"]`).forEach((inp) => {
+            body[inp.getAttribute("data-key")] = inp.value;
+          });
+          await api("/api/settings", "POST", body);
+          showToast("应用参数已保存");
+          await loadBootstrap();
+        } else if (act === "submit-oauth-code") {
+          const code = document.getElementById("oauth-code-" + pid).value;
+          const fields = {};
+          document.querySelectorAll(`[data-oauth-cfg="${CSS.escape(pid)}"]`).forEach((inp) => {
+            if (inp.value.trim()) fields[inp.getAttribute("data-key")] = inp.value;
+          });
+          await api(`/api/providers/${encodeURIComponent(pid)}/auth/code`, "POST", { code, fields });
+          showToast("OAuth 授权成功，账号绑定已生效");
+          await loadBootstrap();
+        } else if (act === "start-flow") {
+          const res = await api(`/api/providers/${encodeURIComponent(pid)}/auth/start`, "POST", {});
+          state.authFlows[pid] = {
+            verification_uri: res.verification_uri,
+            user_code: res.user_code,
+            interval: res.interval || 5,
+            statusText: "等待浏览器确认中..."
+          };
+          renderProvidersTab();
+          schedulePollFlow(pid, res.interval || 5);
+        } else if (act === "poll-flow") {
+          await pollInteractiveFlow(pid, false);
+        } else if (act === "cancel-flow") {
+          clearTimeout(state.pollTimers[pid]);
+          delete state.pollTimers[pid];
+          delete state.authFlows[pid];
+          await api(`/api/providers/${encodeURIComponent(pid)}/auth/cancel`, "POST", {});
+          renderProvidersTab();
+          showToast("已取消设备码授权流程");
+        } else if (act === "save-secret") {
+          const fields = {};
+          document.querySelectorAll(`[data-sec-pid="${CSS.escape(pid)}"]`).forEach((inp) => {
+            fields[inp.getAttribute("data-key")] = inp.value;
+          });
+          await api(`/api/providers/${encodeURIComponent(pid)}/credentials`, "POST", { fields });
+          showToast("凭证已保存并完成账号绑定核验");
+          await loadBootstrap();
+        }
+      } catch (e) { showToast(e.message, "err"); }
+    });
+
+    document.getElementById("tab-access").addEventListener("click", async (ev) => {
+      const btn = ev.target.closest("[data-acc-act]");
+      if (!btn) return;
+      const act = btn.getAttribute("data-acc-act");
+      try {
+        if (act === "add-wl") {
+          const uid = Number(document.getElementById("inp-wl-uid").value);
+          state.access = await api("/api/access/users", "POST", { action: "add", user_id: uid, list_type: "whitelist" });
+          renderAccessTab();
+          showToast("已加入用户白名单");
+        } else if (act === "add-bl") {
+          const uid = Number(document.getElementById("inp-bl-uid").value);
+          state.access = await api("/api/access/users", "POST", { action: "add", user_id: uid, list_type: "blacklist" });
+          renderAccessTab();
+          showToast("已加入用户黑名单");
+        } else if (act === "rm-user") {
+          const uid = Number(btn.getAttribute("data-uid"));
+          state.access = await api("/api/access/users", "POST", { action: "remove", user_id: uid });
+          renderAccessTab();
+          showToast("已移除用户名单记录");
+        } else if (act === "add-grp") {
+          const cid = Number(document.getElementById("inp-grp-cid").value);
+          state.access = await api("/api/access/groups", "POST", { action: "add", chat_id: cid });
+          renderAccessTab();
+          showToast("已添加白名单群组");
+        } else if (act === "rm-group") {
+          const cid = Number(btn.getAttribute("data-cid"));
+          state.access = await api("/api/access/groups", "POST", { action: "remove", chat_id: cid });
+          renderAccessTab();
+          showToast("已移除白名单群组");
+        }
+      } catch (e) { showToast(e.message, "err"); }
+    });
+
+    document.getElementById("tab-tasks").addEventListener("click", async (ev) => {
+      const btn = ev.target.closest("[data-task-del]");
+      if (!btn) return;
+      const tid = btn.getAttribute("data-task-del");
+      const detachOnly = btn.getAttribute("data-detach") === "1";
+      const promptMsg = detachOnly
+        ? `二次确认：仅清除本地脱离绑定的任务记录 (${tid})，不操作当前云端网盘文件，是否继续？`
+        : `二次确认：即将连带删除任务 (${tid}) 对应的云端网盘文件及 OpenList 分享，操作不可恢复，是否继续？`;
+      if (!confirm(promptMsg)) return;
+      try {
+        const res = await api(`/api/tasks/${encodeURIComponent(tid)}/delete`, "POST", {
+          confirm: true,
+          detach_only: detachOnly
+        });
+        showToast(res.message || "删除操作已完成");
+        await loadTasks();
+      } catch (e) { showToast(e.message, "err"); }
+    });
+
+    document.getElementById("btn-reload").addEventListener("click", () => {
+      loadBootstrap().then(() => showToast("状态已刷新")).catch((e) => showToast(e.message, "err"));
+    });
+
+    document.getElementById("btn-logout").addEventListener("click", async () => {
+      clearAllPollTimers();
+      try { await api("/api/auth/logout", "POST", {}); } catch (_) {}
+      showLoginScreen("已安全退出管理员会话。");
+    });
+
+    (async function boot() {
+      const rawHash = window.location.hash || "";
+      let ott = "";
+      if (rawHash.startsWith("#")) {
+        const params = new URLSearchParams(rawHash.slice(1));
+        ott = (params.get("token") || "").trim();
+        if (rawHash.length > 1) {
+          history.replaceState(null, "", "/login");
+        }
+      }
+      if (ott) {
+        try {
+          await api("/api/auth/exchange", "POST", { ott });
+          history.replaceState(null, "", "/");
+          await loadBootstrap();
+          showToast("管理员登录成功");
+          return;
+        } catch (e) {
+          showLoginScreen(e.message || "一次性登录链接已失效，请重新发送 /web 获取。");
+          return;
+        }
+      }
+      try {
+        await loadBootstrap();
+      } catch (_) {
+        showLoginScreen("");
+      }
+    })();
+  </script>
+</body>
+</html>
