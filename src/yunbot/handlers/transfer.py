@@ -472,15 +472,9 @@ def _normalize_action_token(raw_action: Any) -> str:
 def _render_help_text(registry: ProviderRegistry) -> str:
     specs = registry.all_specs()
     provider_lines: list[str] = []
-    exclusive_names: list[str] = []
     for spec in specs:
         cmd = spec.command.lstrip("/")
-        provider_lines.append(
-            f"• /{cmd} <分享链接> [提取码] — 转存至 {spec.display_name}\n"
-            f"  直存模式：/{cmd} -n <分享链接> [提取码]"
-        )
-        if spec.requires_exclusive_dir_for_direct:
-            exclusive_names.append(spec.display_name)
+        provider_lines.append(f"• /{cmd} <分享链接> [提取码] — 转存至 {spec.display_name}")
 
     providers_section = (
         "\n".join(provider_lines)
@@ -494,34 +488,22 @@ def _render_help_text(registry: ProviderRegistry) -> str:
         "【支持的网盘命令】",
         providers_section,
         "",
-        "【两种转存模式说明】",
-        "1. 默认独立子目录模式（不带 -n）：",
-        "   自动创建 `<基准目录>/<yyyymmdd>_<task_id>` 专属子目录保存文件；",
-        "   支持生成 24h 免密 OpenList 分享链接及视频/图片 Telegram 直发。",
-        "2. `-n` 直接转存模式（携带独立 `-n` 参数）：",
-        "   不创建任务子目录，直接存入网盘基准目录并记录归属条目；",
-        "   为防暴露整个基准目录，`-n` 模式禁用 OpenList 分享链接，仍支持媒体直发与精确核验删除。",
+        "【转存与交付说明】",
+        "• 自动创建 `<基准目录>/<yyyymmdd>_<task_id>` 专属子目录保存文件；",
+        "• 支持生成 24h 免密 OpenList 分享链接及视频/图片 Telegram 直发。",
+        "",
+        "【交互说明】",
+        (
+            "• 私聊：可直接发送单条或多条分享链接"
+            f"（单次最多批量识别 {MAX_BATCH_LINKS_PER_MESSAGE} 条，支持多网盘混发；"
+            "单链接与提取码也支持分两条乱序发送）。"
+        ),
+        (
+            "• 群聊：请使用上述显式网盘命令（同样支持一次附带多条同网盘链接批量转存）；"
+            "若缺少提取码，请直接回复机器人的提示消息补全。"
+        ),
+        "• 历史任务：发送 /tasks 查看任务记录、状态详情或执行连带删除。",
     ]
-    if exclusive_names:
-        joined = "、".join(exclusive_names)
-        lines.append(f"   （注：{joined} 的 `-n` 模式需管理员确认基准目录独占写入后方可启用。）")
-
-    lines.extend(
-        [
-            "",
-            "【交互说明】",
-            (
-                "• 私聊：可直接发送单条或多条分享链接"
-                f"（单次最多批量识别 {MAX_BATCH_LINKS_PER_MESSAGE} 条，支持多网盘混发；"
-                "单链接与提取码也支持分两条乱序发送，任一条带 -n 即生效）。"
-            ),
-            (
-                "• 群聊：请使用上述显式网盘命令（同样支持一次附带多条同网盘链接批量转存）；"
-                "若缺少提取码，请直接回复机器人的提示消息补全。"
-            ),
-            "• 历史任务：发送 /tasks 查看任务记录、状态详情或执行连带删除。",
-        ]
-    )
     return "\n".join(lines)
 
 

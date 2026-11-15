@@ -342,14 +342,14 @@ class Application:
             return
         commands: list[BotCommand] = [
             BotCommand(command="start", description="查看使用说明与支持的网盘命令"),
-            BotCommand(command="help", description="查看转存与 -n 直存帮助"),
+            BotCommand(command="help", description="查看转存与媒体交付帮助"),
         ]
         for spec in self.registry.all_specs():
             cmd = spec.command.lstrip("/").lower()
             commands.append(
                 BotCommand(
                     command=cmd,
-                    description=f"转存{spec.display_name}分享链接（支持 -n 直存）",
+                    description=f"转存{spec.display_name}分享链接",
                 )
             )
         commands.append(BotCommand(command="tasks", description="查看历史转存任务与连带删除"))
