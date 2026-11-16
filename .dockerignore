@@ -4,6 +4,7 @@ tg_api_data/
 tests/
 docs/
 .git/
+.github/
 .gitignore
 .venv/
 venv/
